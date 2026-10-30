@@ -529,6 +529,49 @@ It is available as an opponent in our game (not yet public). Its strange
 weakness: against three "Random" bots it wins only **66.7%** instead of nearly 100%, and it loses only through
 bankruptcy. The "Random" bots bid recklessly in auctions, and the model's own bidding was never anchored by a teacher.
 
+### mini-evo5 against the Bonjour bots
+
+A later measurement: we played mini-evo5 against our bots built on the tactics of the fixed-policy opponents of Bonjour et
+al. (["Bonjour A", "Bonjour B" and "Bonjour C"](../bots.md#bonjour-a-b-c); the story of those bots is in
+[entry 2](02-the-bonjour-bots.md)). The paper's evaluation puts one learning player at a table with FP-A, FP-B and
+FP-C, so we did the same with mini-evo5 and, for comparison, with "Calculator" in the same seat: 250 seeds x 4 seat
+rotations = 1,000 games per table, full trade windows, 200-round limit.
+
+| Player | Table with mini-evo5 | Table with "Calculator" |
+|---|---|---|
+| The tested player | 15.4% (13.3-17.8), mean place 2.77 | 13.9% (11.9-16.2), mean place 2.72 |
+| "Bonjour A" | 15.3% (13.2-17.7) | 9.6% (7.9-11.6) |
+| "Bonjour B" | 27.9% (25.2-30.8) | 23.7% (21.2-26.4) |
+| "Bonjour C" | 41.4% (38.4-44.5) | 52.8% (49.7-55.9) |
+
+Both mini-evo5 and "Calculator" win well below 25%, and the difference between them (1.5 points) is within noise.
+"Bonjour C" wins more at the table with "Calculator" than at the table with mini-evo5 (52.8% against 41.4%), which fits
+the [mechanism](02-the-bonjour-bots.md#the-mechanism) by which the Bonjour bots beat our bots, but we have not checked
+the trades behind it.
+
+In the format of the main protocol (the tested player plus three copies of one variant, 30 shared seeds x 4 seats = 120
+games per variant):
+
+| Tested player | 3 x "Bonjour A" | 3 x "Bonjour B" | 3 x "Bonjour C" | All 360 games |
+|---|---|---|---|---|
+| mini-evo5 | 22.5% (16.0-30.8) | 16.7% (11.1-24.3) | 15.8% (10.4-23.4) | 18.3% (14.7-22.7) |
+| "Calculator" | 25.8% (18.8-34.3) | 25.8% (18.8-34.3) | 18.3% (12.4-26.2) | 23.3% (19.3-28.0) |
+
+Single-variant values rest on 120 games (about +/-8 points); the 5-point gap between the totals is within noise. All
+intervals are Wilson intervals that treat games as independent, the optimistic case.
+
+In the paper, FP-A, FP-B and FP-C won 7.69%, 8.79% and 13.57% of games against standard PPO (69.95%), and 2.07%, 2.88%
+and 3.40% against hybrid PPO (91.65%). **Neither mini-evo5 nor "Calculator" reaches even the 25% chance level at this
+table.** The numbers are not directly comparable, for several reasons:
+
+- the rules differ: our game has full trade windows, auctions in fixed steps, counter-offers and the other differences
+  listed in [the GNOME simulator](../related-work.md#the-gnome-simulator);
+- our "Bonjour B" and "Bonjour C" are built from the paper's description, not from code, and they may be stronger than
+  FP-B and FP-C as the authors ran them;
+- mini-evo5 trained under rules version 1, without trade windows (see above), and it never met the Bonjour bots in
+  training, while the paper's PPO players trained against FP-A, FP-B and FP-C;
+- our players sell lone properties for 1.125x the price, which the Bonjour bots exploit.
+
 ## 7. Transformers: the Loki series
 
 ### Distillation into a transformer
@@ -945,7 +988,7 @@ The rules phase has finished; results in the next entry.
   same main-protocol seeds on which we report results, and the Loki checkpoint in the hybrid-player diagnosis was
   chosen on the seeds of that diagnosis.
 - **No humans and no earlier benchmarks.** We have not measured our models against human players, nor on the
-  setups of earlier work (for example the fixed-policy bots of Bonjour et al. or the heuristic bots of yyongg's
+  setups of earlier work (for example the fixed-policy opponents of Bonjour et al. or the heuristic bots of yyongg's
   Monopoly-Agent; see [related work](../related-work.md)), so our numbers cannot be compared with theirs directly.
 
 ## 14. Open questions

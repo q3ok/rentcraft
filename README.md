@@ -18,7 +18,8 @@ entry.
 | File | What is in it |
 |---|---|
 | [journal/01-from-rule-bots-to-v7.md](journal/01-from-rule-bots-to-v7.md) | Research journal, entry 1: everything from the first bots to encoder v7, with all numbers |
-| [bots.md](bots.md) | Our rule-based bots: rules, origin and measured strength |
+| [journal/02-the-bonjour-bots.md](journal/02-the-bonjour-bots.md) | Research journal, entry 2: our bots built on the tactics of the fixed-policy opponents of Bonjour et al., the gap they found in our bots, and everything we built and tested on them |
+| [bots.md](bots.md) | Our rule-based bots: rules, origin, measured strength and the current Elo ranking |
 | [rules.md](rules.md) | The game rules: simplifications and our own decisions where the official rules are silent |
 | [glossary.md](glossary.md) | Terms, every model with its result, and how we measure |
 | [lineage.md](lineage.md) | Which model was trained from which |
@@ -47,25 +48,25 @@ It looks simpler than chess, but for a learning agent it is hard in different wa
 Some earlier work reports high win rates against simple fixed-strategy opponents and with heavily simplified trading
 (see [related work](related-work.md)). We measure against strong hand-written bots under nearly full rules (only
 the few simplifications documented in [the rules](rules.md#simplifications)). We have not run our models on the
-setups of earlier work, so the numbers are not directly comparable.
+setups of earlier work; we only implemented bots with the tactics of the opponents of one earlier work and played them under our rules
+([entry 2](journal/02-the-bonjour-bots.md)), so the numbers are not directly comparable.
 
 ## Research journal
 
 | # | Entry |
 |---|---|
 | 1 | [From rule-based bots to encoder v7](journal/01-from-rule-bots-to-v7.md) |
+| 2 | [The Bonjour bots](journal/02-the-bonjour-bots.md) |
 
 Terms used in the journal (encoder, action space, trade window, teacher correction and others) are explained in the
 [glossary](glossary.md).
 
 ## Key findings
 
-- **Our best model does not beat our best bot yet.** mini-evo5 (all models are listed in the
+- **Our best model does not beat our reference bot yet.** mini-evo5 (all models are listed in the
   [glossary](glossary.md#models), and the [model lineage](lineage.md) shows
-  which was trained from which) wins 30.2% compared with "Calculator"'s 35.7% in our
-  main protocol (1,320 games; [how we measure](#how-we-measure)). "Calculator" is probably, but not certainly, the
-  stronger player: the 95% interval for the 5.5-point gap is about 1.9-9.1 points if all games count as independent,
-  and about -1.7 to 12.7 points in the conservative case
+  which was trained from which) wins less often than "Calculator" in our main protocol (see the chart under
+  [how we measure](#how-we-measure)). "Calculator" is probably, but not certainly, the stronger player
   ([how mini-evo5 compares](journal/01-from-rule-bots-to-v7.md#the-evo-family)).
 - **Trading is the hardest part.** Offers composed by one of our models were accepted only 0.6-1.8% of the time,
   against 65% for the offers its bot teacher made in the same moments, and 59% of the teacher's labels during offer
@@ -76,6 +77,19 @@ Terms used in the journal (encoder, action space, trade window, teacher correcti
 - **A model exploits any hole it can find.** A small model learned to flood other players with offers for nothing,
   and our other models paid it about $2.4 million of in-game money over about 1,700 games
   ([the absurd offers](journal/01-from-rule-bots-to-v7.md#the-absurd-offers)).
+- **Simple set collectors beat the bots we had considered strong.** Our bots built on the tactics of the fixed-policy
+  opponents of Bonjour et al. collect sets by trade and clearly outplay our hand-designed "Calculator", "Tactician"
+  and "GPT-Style" ([the plain result](journal/02-the-bonjour-bots.md#7-the-plain-result)). They exploit a gap in how our
+  bots value a trade, and they stay ahead in a tournament where no player accepts bad offers, so their lead is
+  strength in play ([a tournament without donors](journal/02-the-bonjour-bots.md#6-a-tournament-without-donors)).
+- **A rock-paper-scissors cycle, until bad offers are refused.** Our bots that send deliberately bad offers beat the
+  Bonjour bots, and variants that refuse bad offers lose little to them
+  ([rock, paper, scissors](journal/02-the-bonjour-bots.md#4-two-tournaments-rock-paper-scissors),
+  [resistant variants](journal/02-the-bonjour-bots.md#5-resistant-bonjour-variants)).
+- **Adapting the tactic to the trade windows of our game made our strongest bots.** Variants that also make offers in
+  trade windows, when raising money for a debt and as counter-offers lead our Elo ranking
+  ([the windows variants](journal/02-the-bonjour-bots.md#12-the-windows-variants),
+  [ranking](bots.md#current-elo-ranking)); giving the tactic the offers of one of our own bots made it much weaker.
 - **The training method and the amount of data mattered more than network size so far.** PPO (Proximal Policy
   Optimization, the RL algorithm we use) without an anchor drifts away from what imitation taught, which is
   consistent with a known effect ([related work](related-work.md#closest-related-methods-and-games)). In an MLP fit
@@ -89,18 +103,15 @@ Terms used in the journal (encoder, action space, trade window, teacher correcti
 
 ## The bots
 
-Our rule-based bots (opponents, teachers and yardsticks for the models) each have their own page with their rules,
-origin and measured strength: see [bots.md](bots.md).
+Our rule-based bots (opponents, teachers and yardsticks for the models) are described in [bots.md](bots.md), a table
+and a section for each with its rules, origin and measured strength, and the current Elo ranking.
 
 ## How we measure
 
 A model sits at a four-player table with three copies of one bot; with four equal players chance level is 25%.
-Headline comparisons use our **main protocol (1,320 games)** on shared random seeds: 11 bots x 30 seeds x 4 seat
-positions = 1,320 games per model, that is 330 deals (bot and seed), each played once from every seat. The
-11 bots are "Investor", "Collector", "Miser", "Cautious", "Master", "Calculator", "GPT-Style", "Tactician", "Absurd
-GPT-Style", "Absurd Calculator" and "Hustler"; "Random" is reported separately as a sanity check. The strongest
-rule-based bot ("Calculator") wins 35.7% in this protocol, and our best model so far (mini-evo5) wins 30.2%
-([details](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
+Headline comparisons use our **main protocol (1,320 games)** on shared random seeds: every model plays three copies of
+each of 11 bots, from every seat, on 30 seeds ([details and the list of bots](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
+Bots are compared with one another in mixed tables, tournaments and an Elo ranking ([bots.md](bots.md)).
 
 ```mermaid
 xychart-beta
@@ -112,16 +123,10 @@ xychart-beta
 ```
 
 The bars are results in this protocol; the line is chance level (25%). The models in the chart come from short
-experiments, not final results. The 95% intervals are about +/-1.7 points for the lowest value and +/-2.6 for the
-highest if all 1,320 games count as independent, and up to twice as wide in the conservative case (only the 330
-deals independent; see [how we measure](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
-"Best v6 (B, 1 M)" is the best variant on our newer observation encoder v6 in a short screening run that
-compared encoder variants after 1 M training steps
-([screening](journal/01-from-rule-bots-to-v7.md#screening-phase-a)); "Mjolnir pre-RL" is a short distillation of
-mini-evo5 into a transformer on v6 (a rules phase, imitation of mini-evo5 on 500 games and 2 rounds of teacher
-correction with mini-evo5 and "Calculator" as teachers), before reinforcement learning; after RL it was not measured in
-this protocol. Models measured only in other
-protocols (the Loki series in the old protocol (330 games), for example) are not shown.
+experiments, not final results, and the 95% intervals are about +/-1.7 to +/-2.6 points if all games count as
+independent and up to twice as wide in the conservative case (see
+[how we measure](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)). The models are described in
+the [glossary](glossary.md#models); models measured only in other protocols are not shown.
 
 ## Status
 

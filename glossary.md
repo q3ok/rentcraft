@@ -1,7 +1,7 @@
 # Glossary
 
-Short explanations of the terms used in the [README](README.md), the [journal](journal/01-from-rule-bots-to-v7.md)
-and [bots.md](bots.md).
+Short explanations of the terms used in the [README](README.md), the journal
+([entry 1](journal/01-from-rule-bots-to-v7.md), [entry 2](journal/02-the-bonjour-bots.md)) and [bots.md](bots.md).
 
 Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees and does](#what-the-model-sees-and-does),
 [how we train](#how-we-train), [how we measure](#how-we-measure), [models](#models) ([MLPs](#mlps),
@@ -20,6 +20,42 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
   cards). "Calculator" uses it to compute how often each square is visited in the long run.
 - **Hybrid player:** one player whose areas of play (buying, auctions, asset management, trades) are each played by
   a different bot or by the model.
+- **Set, lone property:** a set is a complete color group owned by one player;
+  a lone property is the only property a player owns in its color group. Our bots value a lone property low, which
+  the [Bonjour bots](bots.md#bonjour-a-b-c) exploit.
+- **Fixed-policy opponents (FP-A, FP-B, FP-C):** the three rule-based opponents of the hybrid RL work of Bonjour et
+  al. ([related work](related-work.md#bonjour-haliem-et-al-hybrid-deep-rl-2021-2022)); our bots built on their tactics are
+  "Bonjour A", "Bonjour B" and "Bonjour C" ([bots.md](bots.md#bonjour-a-b-c)).
+- **Honest bots:** our own bots that do not send deliberately bad offers, that is all of them except the
+  [absurd bots](bots.md#absurd-bots) and ["Hustler"](bots.md#hustler); used in
+  [entry 2](journal/02-the-bonjour-bots.md) to tell them apart from the Bonjour bots.
+- **Shared trade evaluation:** the score most of our bots on rules give a trade: a side's own gain minus 0.6x the
+  other side's gain, where a gain counts property prices, bonuses for complete sets, railroads and both utilities,
+  cash, jail release cards and the cost of mortgages. A score above zero means the trade pays for that side; the bad offers of the [absurd bots](bots.md#absurd-bots) score below -100 for the
+  recipient.
+- **Feed rule (no feeding rivals):** a shared safeguard of our bots: a bot does not give away a property that
+  completes a rival's set or gives the rival two of three properties in a group, unless the price compensates (the
+  rival's gain at most 1.25x the bot's own;
+  [tuning](journal/01-from-rule-bots-to-v7.md#tuning-and-why-we-undid-half-of-it)).
+- **Donor:** a player that accepts trades that lose, such as "Random" (it accepts about half of all offers) or the
+  non-resistant Bonjour bots (they accept a property for pennies). Donors inflate the results of players that exploit
+  them; see [a tournament without donors](journal/02-the-bonjour-bots.md#6-a-tournament-without-donors).
+- **Resistant variant:** a bot that plays like its original but accepts an offer only if the original would and if
+  the offer also passes the feed rule and has a positive shared evaluation; so far the
+  [resistant Bonjour bots](bots.md#resistant-bonjour-a-b-c).
+- **Collecting piece by piece:** getting a color group one property at a time through separate trades, each of which
+  looks fair on its own, and paying a high price for the last property. It is the tactic of the Bonjour bots; ["Wary
+  Calculator"](bots.md#wary-calculator) is our bot that refuses to sell such pieces.
+- **Windows variant:** a bot that adds offers in trade windows, when raising money for a debt and as counter-offers to
+  a bot that otherwise proposes trades only in its own turn; so far ["Resistant Bonjour B + Windows" and "Resistant
+  Bonjour C + Windows"](bots.md#resistant-bonjour-b-and-c-with-windows).
+- **Hybrid bot:** a bot that takes a part of its play (offers, auctions) from another of our bots; so far the
+  [Bonjour hybrids with "Calculator"](bots.md#bonjour-hybrids-with-calculator).
+- **Absurd version:** a bot that plays like its original and also sends one clearly bad offer per turn; besides the
+  first [absurd bots](bots.md#absurd-bots) there are
+  [absurd versions of the leading bots](bots.md#absurd-versions-of-the-leading-bots).
+- **Trade variability:** a number from 0 to 1 that makes a bot's offers and acceptance threshold vary from game to
+  game; see [variance parameters](bots.md#variance-parameters). With 0 a bot plays fixed rules.
 
 ## What the model sees and does
 
@@ -115,8 +151,11 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
   another depends only on their strength difference; fitted to all game results at once and shown on the Elo scale,
   it is more stable than Elo updated game by game.
 - **Successive halving:** a tournament in rounds that plays a few games with every candidate, drops the weaker half,
-  and gives the survivors more games, so the best of many checkpoints is found without playing all of them to the
+  and gives the survivors more games, so the best of many candidates is found without playing all of them to the
   end.
+- **Candidate, sparring partner:** in a successive-halving tournament each table seats exactly one candidate, one of the
+  players being compared, and three sparring partners, a fixed field of rivals drawn from the pool. Sparring partners
+  play to the end, candidates drop out after rounds.
 - **Shared seeds:** every compared player starts each game from the same seed, so the card order and the stream of
   dice are the same; once players' decisions change the flow of the game, later rolls and cards can fall to different
   turns or players. Results repeat to the decimal, which does not make them precise; see
@@ -125,7 +164,9 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
   the model taking over one area; the mean difference in results over many pairs measures that area. Not to be
   confused with the **paired reward**, which uses the same pairing as a training signal.
 - **95% CI, SE:** a 95% confidence interval ("+/-X") and a standard error. For a win rate p over n games the 95% CI is
-  about 1.96 x sqrt(p(1-p)/n); in our write-ups "+/-X" is a 95% CI unless marked as SE.
+  about 1.96 x sqrt(p(1-p)/n); in our write-ups "+/-X" is a 95% CI unless marked as SE. A **Wilson interval** is a
+  slightly more accurate 95% CI for a win rate that stays within 0-100% and is not symmetric near the edges; the
+  intervals of [entry 2](journal/02-the-bonjour-bots.md) are Wilson intervals.
 - **Main protocol (1,320 games):** our headline measurement: a model plus three copies of one bot, 11 bots x 30
   shared seeds x 4 seats, that is 330 deals each played once from every seat. The four games of a deal are not
   independent, so a mean near 30% carries about +/-2.5 points (95% CI) if all games count as independent and about

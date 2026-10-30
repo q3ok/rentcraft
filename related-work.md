@@ -7,11 +7,10 @@ limitations, and how Rentcraft differs.
 
 ### Bonjour, Haliem et al.: hybrid deep RL (2021-2022)
 
-*Decision Making in Monopoly using a Hybrid Deep Reinforcement Learning Approach*, arXiv 2103.00683, later
-IEEE Transactions on Emerging Topics in Computational Intelligence, vol. 6, no. 6, pp. 1335-1344 (2022). The most substantial neural-network work on
-the game.
+*Decision Making in Monopoly using a Hybrid Deep Reinforcement Learning Approach* (full citations of both versions
+are in [Sources](#sources)). The most substantial neural-network work on the game.
 
-The first arXiv version (v1, 2021) carried a different title, *Learning Monopoly Gameplay: A Hybrid Model-Free Deep
+The first version (v1, 2021) carried a different title, *Learning Monopoly Gameplay: A Hybrid Model-Free Deep
 Reinforcement Learning and Imitation Learning Approach* (Haliem, Bonjour et al.). In it the agent first imitated a
 rule-based agent built to reflect human reasoning, which set its initial policy, and then refined that policy with
 deep reinforcement learning. The imitation was built into exploration rather than run as a separate stage: a deep Q
@@ -27,10 +26,10 @@ results below come from the final version, against three fixed-policy agents it 
   the hybrid gives roughly 20-30 points over learning everything at once.
 - **Limitations:**
   - the paper does not discuss auctions;
-  - trading only properties without buildings or mortgages, one open offer per player;
-  - offers are single pre-built actions: property-for-property, or buy/sell at 0.75 / 1 / 1.25 of the price;
-    no arbitrary amounts, no multi-property offers, no counter-offers;
-  - doubles without special rules, cards and fees handled automatically;
+  - one open offer per player, and offers are single pre-built actions: property-for-property, or buy/sell at
+    0.75 / 1 / 1.25 of the price; no arbitrary amounts and no multi-property offers;
+  - the game it runs on is simpler than ours in several places (doubles, what can be traded, bankruptcy, cards and
+    fees handled automatically; see [the GNOME simulator](#the-gnome-simulator));
   - opponents are simple fixed strategies (different property priorities), so a high win rate says little about
     performance against strong bots;
   - short training (PPO: 2,000 games).
@@ -53,8 +52,9 @@ From the code, GNOME's rules are simpler than ours in several places, which matt
 - the bank's cash is finite.
 
 Auctions, even building, the house and hotel limits and mortgages work much as in our game. The win rates of the
-paper above therefore concern a simpler game and simple opponents. We are preparing our own reimplementation of
-GNOME's latest rule-based agent as an additional opponent, without copying its code.
+paper above therefore concern a simpler game and simple opponents. Our own bots built on the tactics of FP-A, FP-B and
+FP-C, written from scratch for our rules, are described in [bots.md](bots.md#bonjour-a-b-c), and what they showed in
+[entry 2 of our journal](journal/02-the-bonjour-bots.md).
 
 ### Bailis, Fachantidis, Vlahavas: Q-learning (2014)
 
@@ -80,6 +80,20 @@ An open-source hobby project (Python) with design notes and measured results.
 - **Limitations:** the model neither proposes nor evaluates trades; no counter-offers; the agent mortgages and sells
   buildings only in forced liquidation; the opponents share the agent's trade rule.
 
+### Frayn, and Shrestha, Myers and Lewin: genetic algorithms
+
+Frayn (IEEE Symposium on Computational Intelligence and Games, 2005, *An Evolutionary Approach to Strategies for the
+Game of Monopoly*) evolved Monopoly strategies with a genetic algorithm. Shrestha, Myers and Lewin (*Optimizing Strategies for Monopoly: The Mega
+Edition Using Genetic Algorithms and Simulations*, *Academy of Economics and Finance Journal*, vol. 7, pp. 87-97, 2016) apply Frayn's approach to Monopoly: The Mega Edition: 20 genes
+(a purchase and a build probability for each of the 10 property categories), fitness from 100 four-player games against
+random opponents, and a population of 1000 for 70 generations. They report that buying nearly everything is best, that
+bidding 25-50% above face value in auctions helps, and that players who trade do better. Their rules differ from ours
+(speed die, bus tickets, extra squares) and their trading is a fixed heuristic, so we cite the work for the method, not
+for transferable numbers. From our reading of their data and code, with only 100 games per evaluation the fitness is
+noisy, and the genes of the best individual did not settle across generations. We tune bot parameters differently: in
+paired games on identical dice, one parameter at a time ([coordinate search](glossary.md#how-we-train)), and we do not
+use a genetic algorithm.
+
 ### Other works
 
 Arun et al. (TENCON 2019) also applied reinforcement learning to the game (we could not access the full text, so we
@@ -87,6 +101,41 @@ do not describe it; it is not related to the GNOME simulator above). Student and
 Carlo tree search with actions sampled first by type and then within the type (Sammul, a fourth-year project at the
 University of Edinburgh, 2018), "Bot-opoly" in MATLAB (regression-tree position evaluation; trades only one property for one property). They usually
 simplify the rules heavily and skip trading or reduce it to a few fixed options.
+
+## Markov chain analyses of the board
+
+The classic analyses of the game do not concern play at all but the board: where a token ends its move in a long game.
+Ash and Bishop (*Mathematics Magazine*, 1972) modeled a player's position as a Markov chain over the squares, and Ian
+Stewart popularized the method in his *Scientific American* columns (1996), in which he built a 40-square chain and
+then, after readers' corrections, refined it with the real dice rules (a double means another throw, three doubles in
+a row mean jail), the go-to-jail square, the jail rules and the cards that move a token. We could read Stewart's
+columns but not the full text of Ash and Bishop, so we describe only the columns. In the refined chain, the jail
+square is occupied almost twice as often as any other square (5.89% of the time in the long run); the next most
+visited square is a red property (3.18%), and the start square is third (3.11%). The railroads sit around 2.9-3.1%,
+except the one with no card square next to it (2.44%). A reader's remark in the column, which the calculations
+support, is that the orange properties are especially valuable because they are the likely landing spots after
+leaving jail. Another correspondent, Friddell, extended the chain to the property market and looked for the break-even
+point for houses; among the properties he evaluated (he stopped at the red group), an orange property paid back
+three houses fastest, in about 10 turns, and buying houses early reached break-even sooner. These are the results of
+Stewart's correspondents, which we have not reproduced.
+
+We use the same idea in our bots. "Calculator" and "GPT-Style" price a square by the chance that a rival's move ends on
+it, taken from the chain's long-run distribution, times the rent. "Master" rests on advice from champions and on
+board-probability analyses of this kind, for example its preference for the orange group. The encoder of our models
+receives the same landing frequency, multiplied by the rent, as a feature of each property. The chain is computed
+for our rules, not taken from the columns.
+
+Our tournaments agree with the classical picture and add to it. **Agreement:** "Resistant Bonjour C" hunts the
+railroads, orange and light blue, groups that the chain rates as frequently visited, and it led the
+[tournament without donors](journal/02-the-bonjour-bots.md#6-a-tournament-without-donors). **Addition:** the chain
+values a group that a player already owns. It does not say what it costs to get the group (auctions, trades) or how
+its value falls with the number of rivals who want it: the payoff of a strategy may depend on how many others use it
+(a frequency-dependent effect). In our elimination tournaments "Resistant Bonjour B" (railroads and dark blue) was ahead
+of "Resistant Bonjour C" in pools with several bots that hunt the groups of "Resistant Bonjour C", and behind it in a
+pool without them, though each gap is small ([B against C](journal/02-the-bonjour-bots.md#b-against-c)). The main edge
+of the Bonjour bots is also something the chain does not describe:
+[collecting a group piece by piece through trades](journal/02-the-bonjour-bots.md#the-mechanism). So the chain tells us
+which groups are worth owning, and which groups are worth chasing may depend on who else is chasing them.
 
 ## Closest related methods and games
 
@@ -129,10 +178,9 @@ strength.
 - **Trading without shortcuts:** offers with any number of properties and cash in both directions, counter-offers,
   trade windows during other players' turns, negotiation limits. A model can compose an offer **step by step**
   (select a property, add cash, request, send) or pick from a generator's suggestions.
-- **Strong bots as opponents and teachers:** over a dozen rule-based bots with distinct characters; the best one wins about
-  36% in our main protocol (three copies of one bot at the table; chance level: 25%). They are also our training
-  opponents, so our results show strength against this pool
-  ([limitations](journal/01-from-rule-bots-to-v7.md#13-limitations)).
+- **Strong bots as opponents and teachers:** more than two dozen rule-based bots with distinct characters, among them
+  bots built on the tactics of earlier work ([bots.md](bots.md)). They are also our training opponents, so our results
+  show strength against this pool ([limitations](journal/01-from-rule-bots-to-v7.md#13-limitations)).
 - **Several learning methods in one toolkit:** imitation of bots, teacher-guided correction (DAgger) per decision type,
   PPO with anchors (trade teacher, KL penalty to the starting model), MLP and transformer networks, auxiliary
   prediction heads.
@@ -166,6 +214,10 @@ strength.
   Carleton College, 2025, [digitalcommons.carleton.edu/comps/3824](https://digitalcommons.carleton.edu/comps/3824).
 - S. Sammul, *Learning to Play Monopoly with Monte Carlo Tree Search*, 4th Year Project Report, School of Informatics,
   University of Edinburgh, 2018.
+- C. M. Frayn, *An Evolutionary Approach to Strategies for the Game of Monopoly*, 2005 IEEE Symposium on Computational
+  Intelligence and Games (CIG 2005), Essex University, Colchester, 2005, p. 66 of the proceedings.
+- S. R. Shrestha, D. S. Myers, R. A. Lewin, *Optimizing Strategies for Monopoly: The Mega Edition Using Genetic
+  Algorithms and Simulations*, Academy of Economics and Finance Journal 7, 87-97, 2016.
 - yyongg, *Monopoly-Agent*, [github.com/yyongg/Monopoly-Agent](https://github.com/yyongg/Monopoly-Agent),
   design notes and results at [yyongg.github.io/Monopoly-Agent](https://yyongg.github.io/Monopoly-Agent/).
 - J. Zia, *Bot-opoly* (MATLAB), [github.com/jonzia/Monopoly](https://github.com/jonzia/Monopoly).
@@ -174,6 +226,11 @@ strength.
 - Meta Fundamental AI Research Diplomacy Team (FAIR), A. Bakhtin, N. Brown, E. Dinan et al., *Human-level play in the
   game of Diplomacy by combining language models with strategic reasoning*, Science 378 (6624), 1067-1074, 2022,
   [doi:10.1126/science.ade9097](https://doi.org/10.1126/science.ade9097).
+- R. B. Ash, R. L. Bishop, *Monopoly as a Markov Process*, Mathematics Magazine 45 (1), 26-29, 1972 (citation
+  confirmed from other papers' reference lists; we could not read the text).
+- I. Stewart, *How Fair Is Monopoly?*, Scientific American 274 (4), 104-105, 1996 (Mathematical Recreations).
+- I. Stewart, *Monopoly Revisited*, Scientific American 275 (4), 116-119, 1996 (Mathematical Recreations),
+  [copy at Harvard](https://abel.math.harvard.edu/archive/21b_fall_05/Articles/monopolyrevisited.pdf).
 - O. Vinyals, I. Babuschkin, W. M. Czarnecki, M. Mathieu et al., *Grandmaster level in StarCraft II using multi-agent
   reinforcement learning*, Nature 575 (7782), 350-354, 2019,
   [doi:10.1038/s41586-019-1724-z](https://doi.org/10.1038/s41586-019-1724-z).

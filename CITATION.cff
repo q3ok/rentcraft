@@ -3,15 +3,13 @@ message: "If you use these write-ups, please cite them as below."
 title: "Rentcraft: an open research log on teaching small neural networks to play a Monopoly-style board game"
 authors:
   - alias: q3ok
-version: "journal entry 1"
 url: "https://github.com/q3ok/rentcraft"
 repository-code: "https://github.com/q3ok/rentcraft"
 license: CC-BY-4.0
 abstract: >-
   Public write-ups of Rentcraft, a Monopoly-style board game written from scratch as a research testbed for
-  game-playing AI: what we tried while teaching small neural networks (MLPs and transformers) to play it against
-  strong rule-based bots, including open-ended trade negotiation, what worked, what did not, and the numbers
-  behind it.
+  game-playing AI. The research log documents experiments with small neural networks and rule-based bots,
+  including open-ended trade negotiation, tournament results, failed approaches, and their limitations.
 keywords:
   - reinforcement learning
   - imitation learning

@@ -6,8 +6,9 @@ hardest part: negotiating trades with other players.**
 Rentcraft is a **Monopoly-style board game** written from scratch as a research testbed for game-playing AI. Humans,
 rule-based bots, AI agents (connected over MCP, the Model Context Protocol, or a REST API) and our own
 reinforcement-learning (RL) models can all sit at the same table, in any mix of two to four players. Our networks are
-small: the MLPs (32x32) have about 31,000-42,000 parameters, depending on their input, and the transformers about
-0.09-1.3 million.
+small: the original 32x32 MLPs have about 31,000-42,000 parameters, depending on their input. The transformer
+comparison ranges from about 24,000 to 6.6 million parameters and also includes MLPs with 1.3 and 17.2 million
+parameters ([entry 3](journal/03-transformers-assemble.md#analysis-comparing-network-sizes-against-the-same-set-of-bots)).
 
 This repository holds the **public write-ups** of the project: what we tried, what worked, what did not, and the
 numbers behind it. The game itself (without the training tooling) is planned to be published here later.
@@ -19,10 +20,12 @@ entry.
 |---|---|
 | [journal/01-from-rule-bots-to-v7.md](journal/01-from-rule-bots-to-v7.md) | Research journal, entry 1: everything from the first bots to encoder v7, with all numbers |
 | [journal/02-the-bonjour-bots.md](journal/02-the-bonjour-bots.md) | Research journal, entry 2: our bots built on the tactics of the fixed-policy opponents of Bonjour et al., the gap they found in our bots, and everything we built and tested on them |
+| [journal/03-transformers-assemble.md](journal/03-transformers-assemble.md) | Research journal, entry 3: our transition to transformer networks |
 | [bots.md](bots.md) | Our rule-based bots: rules, origin, measured strength and the current Elo ranking |
 | [rules.md](rules.md) | The game rules: simplifications and our own decisions where the official rules are silent |
 | [glossary.md](glossary.md) | Terms, every model with its result, and how we measure |
 | [lineage.md](lineage.md) | Which model was trained from which |
+| [abandoned-models.md](abandoned-models.md) | Models and training branches we abandoned, such as the Loki series |
 | [related-work.md](related-work.md) | Earlier work on the game and the closest related methods |
 | [CITATION.cff](CITATION.cff), [LICENSE](LICENSE) | How to cite these texts, and their license |
 
@@ -57,17 +60,20 @@ setups of earlier work; we only implemented bots with the tactics of the opponen
 |---|---|
 | 1 | [From rule-based bots to encoder v7](journal/01-from-rule-bots-to-v7.md) |
 | 2 | [The Bonjour bots](journal/02-the-bonjour-bots.md) |
+| 3 | [Transformers assemble!](journal/03-transformers-assemble.md) |
 
 Terms used in the journal (encoder, action space, trade window, teacher correction and others) are explained in the
 [glossary](glossary.md).
 
 ## Key findings
 
-- **Our best model does not beat our reference bot yet.** mini-evo5 (all models are listed in the
-  [glossary](glossary.md#models), and the [model lineage](lineage.md) shows
-  which was trained from which) wins less often than "Calculator" in our main protocol (see the chart under
-  [how we measure](#how-we-measure)). "Calculator" is probably, but not certainly, the stronger player
-  ([how mini-evo5 compares](journal/01-from-rule-bots-to-v7.md#the-evo-family)).
+- **Our latest tournament did not detect a significant gap between njord-gen0 and its teacher.** Against the same
+  pool of sparring bots, njord-gen0 won 31.5% of 2,533 games. Compared with its teacher, "Resistant Bonjour C + Windows",
+  through the same tournament round, with 2,533 games each, the reported test gave p = 0.15. This does not establish
+  equal strength. The teacher's 33.3% over all 4,533 games is a separate full-tournament summary. Earlier, mini-evo5 won 30.2% in our main protocol against
+  Calculator's 35.7%; these results come from different setups and should not be compared directly. See
+  [entry 3](journal/03-transformers-assemble.md#njord-gen0-and-the-beginnings-of-njord-gen1) and
+  [entry 1](journal/01-from-rule-bots-to-v7.md#the-evo-family).
 - **Trading is the hardest part.** Offers composed by one of our models were accepted only 0.6-1.8% of the time,
   against 65% for the offers its bot teacher made in the same moments, and 59% of the teacher's labels during offer
   composition were "cancel" ([Loki gen3](journal/01-from-rule-bots-to-v7.md#loki-gen3-training-one-area)). A
@@ -96,10 +102,8 @@ Terms used in the journal (encoder, action space, trade window, teacher correcti
   test the RL-trained network had a higher (worse) loss than a network of the same size reached by supervised
   learning on the teacher's labels; four network sizes reached the same loss there, which may be a floor rather than proof that size does not
   matter. In a separate capacity test (one run per network), doubling the data helped more than six times more
-  parameters ([what we learned](journal/01-from-rule-bots-to-v7.md#12-what-we-learned-so-far)).
-- **Know the limits.** Our bots fall into two strong families plus simpler personalities, they are also our training
-  opponents, and every model comes from a single training run
-  ([limitations](journal/01-from-rule-bots-to-v7.md#13-limitations)).
+  parameters ([what we learned](journal/01-from-rule-bots-to-v7.md#11-what-we-learned-so-far)).
+- **Know the limits.** Our bots fall into two strong families plus simpler personalities; they are also our training opponents ([limitations](journal/01-from-rule-bots-to-v7.md#12-limitations)).
 
 ## The bots
 
@@ -109,36 +113,27 @@ and a section for each with its rules, origin and measured strength, and the cur
 ## How we measure
 
 A model sits at a four-player table with three copies of one bot; with four equal players chance level is 25%.
-Headline comparisons use our **main protocol (1,320 games)** on shared random seeds: every model plays three copies of
-each of 11 bots, from every seat, on 30 seeds ([details and the list of bots](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
-Bots are compared with one another in mixed tables, tournaments and an Elo ranking ([bots.md](bots.md)).
-
-```mermaid
-xychart-beta
-    title "Wins in the main protocol (1,320 games each, %)"
-    x-axis ["Calculator (bot)", "mini-evo5", "Best v6 (B, 1 M)", "Mjolnir pre-RL"]
-    y-axis "Wins (%)" 0 --> 40
-    bar [35.7, 30.2, 15.9, 11.0]
-    line [25, 25, 25, 25]
-```
-
-The bars are results in this protocol; the line is chance level (25%). The models in the chart come from short
-experiments, not final results, and the 95% intervals are about +/-1.7 to +/-2.6 points if all games count as
-independent and up to twice as wide in the conservative case (see
-[how we measure](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)). The models are described in
-the [glossary](glossary.md#models); models measured only in other protocols are not shown.
+The earlier model comparisons use our **main protocol (1,320 games)** on shared random seeds: each tested player faces
+three copies of each of 11 bots, from every seat, on 30 seeds ([details and the list of bots](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
+The njord results use elimination tournaments against a shared pool of sparring bots, as described in
+[entry 3](journal/03-transformers-assemble.md#njord-gen0-and-the-beginnings-of-njord-gen1).
+Bots are compared in mixed tables, tournaments and an Elo ranking ([bots.md](bots.md)). Elo figures are snapshots
+taken when the respective documents were written.
 
 ## Status
 
-Active. The current experiment (njord-gen0, a 6-layer transformer on observation encoder v7) is training; its rules
-phase has finished, and results will appear in the next journal entry.
+Active. Experimenting.
 
 ## About
 
-Rentcraft is a one-person project by q3ok, who is learning reinforcement learning on it. Most of the code was written
-by Claude, Anthropic's AI assistant, under our direction: we decide what to build and what to test, choose the
-training settings and launch the trainings ourselves
-([how we work](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
+Rentcraft is a one-person project that I use to learn reinforcement learning. Most of the code was written by
+Claude, Anthropic's AI assistant, under my direction: I decide what to build and test, choose the training settings,
+and launch the runs ([how I work](journal/01-from-rule-bots-to-v7.md#1-the-question-and-how-we-measure)).
+
+Claude is also a teacher for me. It helps me start and monitor several things at once and carries out task chains
+such as "Do X, and if the result is Y, do Z." I tried giving it more autonomy in the
+[Loki project](abandoned-models.md#abandoned-branch-loki), but that did not work well for me: I did not know exactly
+what had been done or why, so I abandoned the branch.
 
 ## License
 

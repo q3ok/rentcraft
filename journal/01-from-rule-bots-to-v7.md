@@ -15,7 +15,7 @@ that found a hole in the system) and [which part of the game loses?](#which-part
   networks (multilayer perceptrons, MLPs, and transformers) that learn to play it against strong rule-based bots.
 - **How we measure:** in our main protocol (1,320 games) a model plays against three copies of one bot, 11 bots x 30
   shared seeds x 4 seats; with four equal players chance level is 25% ([details](#1-the-question-and-how-we-measure)).
-- **Where we stand:** our best model, mini-evo5, wins 30.2%; our best bot, "Calculator", wins 35.7%, probably but
+- **Where we stood at the end of the work covered by this entry:** our best model, mini-evo5, wins 30.2%; our best bot, "Calculator", wins 35.7%, probably but
   not certainly a real gap ([how mini-evo5 compares](#the-evo-family); all models named in this entry are listed in
   the [glossary](../glossary.md#models)).
 - **The hardest area is trading:** offers composed by one of our models were accepted 0.6-1.8% of the time, against
@@ -25,8 +25,6 @@ that found a hole in the system) and [which part of the game loses?](#which-part
 - **The most interesting discovery:** a small model found that it could flood other players with offers for nothing,
   and our other models handed it about $2.4 million of in-game money over about 1,700 games
   ([the absurd offers](#the-absurd-offers)).
-- **What we train now:** njord-gen0, a 6-layer transformer on encoder v7 that imitates a hybrid of mini-evo5 and
-  "Calculator" before reinforcement learning (RL) ([current experiment](#10-current-experiment-njord-gen0)).
 
 ## Contents
 
@@ -40,11 +38,10 @@ that found a hole in the system) and [which part of the game loses?](#which-part
 7. [Transformers: the Loki series](#7-transformers-the-loki-series)
 8. [Encoder v6 and the screening run](#8-encoder-v6-and-the-screening-run)
 9. [Encoder v7](#9-encoder-v7)
-10. [Current experiment: njord-gen0](#10-current-experiment-njord-gen0)
-11. [Curiosities and failures](#11-curiosities-and-failures)
-12. [What we learned so far](#12-what-we-learned-so-far)
-13. [Limitations](#13-limitations)
-14. [Open questions](#14-open-questions)
+10. [Curiosities and failures](#10-curiosities-and-failures)
+11. [What we learned so far](#11-what-we-learned-so-far)
+12. [Limitations](#12-limitations)
+13. [Open questions](#13-open-questions)
 
 ## 1. The question and how we measure
 
@@ -111,7 +108,7 @@ effectively independent samples lies somewhere between 330 and 1,320. Our interv
 | The difference between two means near 30-36% | about +/-3.6 points | about +/-7 points |
 | A single bot (120 games, 30 deals) | about +/-8 points | about +/-16 points |
 
-Several bots also form families of similar players ([limitations](#13-limitations)), which a mean over 11 bots does
+Several bots also form families of similar players ([limitations](#12-limitations)), which a mean over 11 bots does
 not account for. **Selection and test seeds.** The main-protocol seeds are a fixed block that training evaluations,
 tournaments and bot tuning do not use (they draw other seeds), so mini-evo5 was not selected, and the bots were not
 tuned, on them. We did, however, compare encoder variants and other experiments in the main protocol itself, and we
@@ -182,7 +179,7 @@ with all of them is in [bots.md](../bots.md).
   little too, but that result is within noise. This makes it a useful test of whether a model that imitates it can drop its weak
   rules.
 - ["Calculator"](../bots.md#calculator) computes every decision from board probabilities (a Markov chain). It has
-  remained our strongest bot and main reference: in the main protocol it wins **35.7%**.
+  remained our strongest bot and main reference at this stage of the project: in the main protocol it wins **35.7%**.
 - ["GPT-Style"](../bots.md#gpt-style) has the most unusual origin. After a few games against the GPT-6.1-Sol language
   model, connected through our MCP server, we asked GPT-6.1-Sol to describe in text how it plays; Claude Opus
   implemented its 12-point description as a rule-based bot. It became the strongest bot of its time and the first
@@ -315,7 +312,7 @@ combined blocks as one):
 | v5-lite / v5-full | v3 (lite) or v4 (full) plus rents, prices, expected rent per roll and roll risk: everything "Calculator" computes from | 725 / 867 |
 | Blocks | Free combination of blocks (trade context, liquidity, offer history, cards, changes since my last turn, trade window...) | varies |
 | v6 | Facts and rules only, an event log and per-pair offer history | up to 2,275 |
-| v7 | A closed set of blocks, a log of real events only | 3,374 by default (64-entry log, 4 offers per direction); 3,734 in njord-gen0 (8 offers per direction) |
+| v7 | A closed set of blocks, a log of real events only | 3,374 by default (64-entry log, 4 offers per direction) |
 
 v4 and v5-lite have the same size by coincidence: the memory block and the rent block each add 142 numbers to v3.
 
@@ -476,8 +473,8 @@ tournament and the Elo ranking were distorted by it.
 Our response was to add bots whose job is to supply bad offers, so that models see them in training and learn to
 refuse them: ["Absurd GPT-Style", "Absurd Calculator", "Absurd Investor"](../bots.md#absurd-bots), which play like the
 originals but send one clearly unprofitable offer per turn, and ["Hustler"](../bots.md#hustler), which plays like
-"Calculator" and tries up to twice per turn. They answer offers like the originals, so they cannot be exploited
-themselves, and they are mixed into training opponents as a robustness test. Tournaments with them also exposed two
+"Calculator" and tries up to twice per turn. They answer offers like the originals and resist the bad-offer tactics
+tested here. They are mixed into training opponents as a robustness test. Tournaments with them also exposed two
 flaws in "GPT-Style"'s trade evaluation, which led to ["Tactician"](../bots.md#tactician).
 
 ### The "evo" family
@@ -720,8 +717,10 @@ network and amount of data.
 | 6x128 | 867 k | 0.573 (78.0%) | 0.414 (84.1%) |
 
 The two identical losses at 50% data are a coincidence (equal to three decimals), not a copying error: we checked
-the source, and the two runs reached different accuracies. Doubling the data helped much more than six times more parameters. At 81% accuracy per step and about 6 steps per
-offer, a whole offer matches the bot's in only about 28% of cases.
+the source, and the two runs reached different accuracies. Doubling the data helped much more than six times more parameters.
+As a rough approximation, if each of an offer's 6 steps were correct independently with probability 81%, the whole
+offer would match the bot's with probability 0.81^6, about 28%. This is not a measured whole-offer accuracy; errors
+between steps may be dependent.
 
 Our conclusion, which led to the next encoder: the model should **learn to judge offers itself** rather than
 be handed the engine's heuristics.
@@ -858,54 +857,9 @@ events: payments, building, mortgages, cards, offers, trades, jail. In short: th
 11 rounds instead of 2.4.
 
 The default v7 (a 64-entry log and 4 offers per
-direction for each pair of players) has 3,374 numbers and 158 transformer tokens; njord-gen0 keeps 8 offers per
-direction, which gives 3,734 numbers.
+direction for each pair of players) has 3,374 numbers and 158 transformer tokens.
 
-## 10. Current experiment: njord-gen0
-
-The first model on v7 is named after Njord, the Norse god of the sea and wealth and patron of merchants. It is
-deliberately a fresh start rather than a clean comparison: the encoder and the network change at once.
-
-The first njord attempt was stopped in its rules phase once we found that its log was mostly window bookkeeping
-([the log that was mostly noise](#the-log-that-was-mostly-noise)). What it did show: on 1.2 M observations the state heads (complete sets, net worth, liquidity, rent on
-the next roll) reached a held-out loss of about 0.001 after six epochs, with almost no gap between training and
-held-out games, while the placing head started memorizing in epoch 2 and was frozen. The current experiment,
-njord-gen0, starts again from scratch on the cleaned-up log:
-
-- **Network:** transformer, 6 layers x 128, feed-forward 512, 4 attention heads, SiLU: **1.33 M parameters**
-  (Mjolnir gen0c had 4 x 128 and about 0.66 M; the exact count of a 4 x 128 network depends on its input, which is
-  why the screening variant C-4x128 had 596,933). The extra depth should help reasoning over history.
-- **Input:** v7 with a 64-entry log of real events and 8 offers per direction for each pair of players (3,734
-  numbers, against 3,374 for the default v7 with 4 offers).
-- **Rules phase:** 2,000 bot games, learning rate 0.0005, at most 10 epochs, stopped after 2 epochs without
-  improvement on held-out games. The "final place" head is detached from the trunk (it reads the trunk's output but
-  its errors do not change the trunk; nothing is frozen) and learns from at most 16 decisions per game, so it has
-  less chance to learn whole games by heart.
-- **Imitation of a hybrid player:** mini-evo5 for buying and asset management, "Calculator" for auctions and trades;
-  1,500 games, at most 12 epochs, learning rate 0.001.
-- **Teacher correction:** 10 rounds x 250 games with the same split of teachers.
-- **PPO:** 20 M steps with the same teachers, whose influence fades from 0.1 to zero over the first 5 M steps.
-- **Auxiliary heads** keep learning in imitation, teacher correction and RL with a weight of 0.1, and a head that
-  starts memorizing is frozen until the end of that phase (or round); in the next phase all heads learn again.
-- **Resuming:** the training saves its state after every stage, so an interrupted run can continue from there.
-
-```mermaid
-flowchart LR
-    A["Rules phase<br/>2,000 bot games<br/>auxiliary heads only"] --> B["Imitation of a hybrid player<br/>1,500 games"]
-    B --> C["Teacher correction<br/>10 rounds x 250 games"]
-    C --> D["PPO, 20 M steps<br/>teacher 0.1 fading to 0<br/>over 5 M steps"]
-```
-
-Why let the teacher fade again, after Loki gen2b [fell apart](#the-loki-sprint) once its teacher faded (it overbid its way
-into bankruptcy)? In njord the teacher in RL is a penalty for departing from the teacher's suggestion at every
-decision (0.1, fading to zero over 5 M steps), and the model starts from a much better point: a rules phase, imitation
-and 10 rounds of teacher correction. In the earlier [Mjolnir](#mjolnir) run the same scheme did not lead to a collapse
-after the fade (in training evaluations it rose from about 8.5% to about 17% at 3 M steps, although its entropy kept
-rising). Whether that holds this time is an [open question](#14-open-questions).
-
-The rules phase has finished; results in the next entry.
-
-## 11. Curiosities and failures
+## 10. Curiosities and failures
 
 - **Models that lose to "Random" bots.** mini-evo5 wins only 66.7% against three "Random" bots, Loki gen2b at 3 M
   (4.5 M total) won 0%,
@@ -934,7 +888,7 @@ The rules phase has finished; results in the next entry.
   points for a difference).
 - **Memorized games.** A place loss of 0.07 on training games and 1.08 on new ones.
 
-## 12. What we learned so far
+## 11. What we learned so far
 
 1. **A model exploits any shortcut it can find**, so the training ground has to contain the tricks we want models
    to resist ([the absurd offers](#the-absurd-offers)).
@@ -967,7 +921,7 @@ The rules phase has finished; results in the next entry.
 8. **Bots need characters and variability.** Tuning for strength alone produced a uniform, predictable pool.
    Distinct characters, randomness in trades and bots that send bad offers on purpose make a better training ground.
 
-## 13. Limitations
+## 12. Limitations
 
 - **The 11 bots are less varied than the number suggests.** Six of them form two families of three: "Calculator",
   "Absurd Calculator" and "Hustler" play the same game apart from the bad offers, and so do "GPT-Style", "Tactician"
@@ -991,11 +945,8 @@ The rules phase has finished; results in the next entry.
   setups of earlier work (for example the fixed-policy opponents of Bonjour et al. or the heuristic bots of yyongg's
   Monopoly-Agent; see [related work](../related-work.md)), so our numbers cannot be compared with theirs directly.
 
-## 14. Open questions
+## 13. Open questions
 
-- Will njord-gen0 on v7 beat mini-evo5 (30.2%) and "Calculator" (35.7%)?
-- Will njord-gen0 hold its level once the teacher has faded to zero, or fall apart like Loki gen2b? Mjolnir did not
-  collapse after its fade, but we saw that only in noisy training evaluations, not in the main protocol.
 - Does the model actually use the event log and the turn block? We plan to measure it by masking or swapping an
   input block and checking how decisions and auxiliary heads change.
 - Do the auxiliary heads help play? Only a comparison of runs with and without them will tell.

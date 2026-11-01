@@ -51,6 +51,10 @@ From the code, GNOME's rules are simpler than ours in several places, which matt
 - in bankruptcy all assets return to the bank, without an auction and without passing to the creditor;
 - the bank's cash is finite.
 
+GNOME also has an out-of-turn phase before the roll, and the paper's interface permits trade offers in that phase.
+Rentcraft's additional trade windows open at specific events, including payments, acquisitions, negotiations and
+the end of a turn; the difference is when these opportunities occur, not whether play outside one's own turn is possible.
+
 Auctions, even building, the house and hotel limits and mortgages work much as in our game. The win rates of the
 paper above therefore concern a simpler game and simple opponents. Our own bots built on the tactics of FP-A, FP-B and
 FP-C, written from scratch for our rules, are described in [bots.md](bots.md#bonjour-a-b-c), and what they showed in
@@ -180,7 +184,7 @@ strength.
   (select a property, add cash, request, send) or pick from a generator's suggestions.
 - **Strong bots as opponents and teachers:** more than two dozen rule-based bots with distinct characters, among them
   bots built on the tactics of earlier work ([bots.md](bots.md)). They are also our training opponents, so our results
-  show strength against this pool ([limitations](journal/01-from-rule-bots-to-v7.md#13-limitations)).
+  show strength against this pool ([limitations](journal/01-from-rule-bots-to-v7.md#12-limitations)).
 - **Several learning methods in one toolkit:** imitation of bots, teacher-guided correction (DAgger) per decision type,
   PPO with anchors (trade teacher, KL penalty to the starting model), MLP and transformer networks, auxiliary
   prediction heads.

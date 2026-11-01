@@ -1,7 +1,8 @@
 # Glossary
 
 Short explanations of the terms used in the [README](README.md), the journal
-([entry 1](journal/01-from-rule-bots-to-v7.md), [entry 2](journal/02-the-bonjour-bots.md)) and [bots.md](bots.md).
+([entry 1](journal/01-from-rule-bots-to-v7.md), [entry 2](journal/02-the-bonjour-bots.md),
+[entry 3](journal/03-transformers-assemble.md)) and [bots.md](bots.md).
 
 Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees and does](#what-the-model-sees-and-does),
 [how we train](#how-we-train), [how we measure](#how-we-measure), [models](#models) ([MLPs](#mlps),
@@ -16,8 +17,10 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
   them can pick one instead of composing an offer itself.
 - **Offer draft:** an offer a model is composing step by step (add or remove a property, add or request cash, add a
   jail release card), which ends with "send" or "cancel".
-- **Markov chain:** a model of movement in which the next square depends only on the current one (and the dice and
-  cards). "Calculator" uses it to compute how often each square is visited in the long run.
+- **Markov chain:** a probabilistic model in which the distribution of the next state depends only on the current
+  state, not on the earlier history. "Calculator" uses a movement model to estimate long-run square visit frequencies.
+  In an exact model of the game, the state must include more than the square: jail status, consecutive doubles and,
+  when card order is preserved, the deck state also matter. A model based only on squares is an approximation.
 - **Hybrid player:** one player whose areas of play (buying, auctions, asset management, trades) are each played by
   a different bot or by the model.
 - **Set, lone property:** a set is a complete color group owned by one player;
@@ -29,7 +32,7 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
 - **Honest bots:** our own bots that do not send deliberately bad offers, that is all of them except the
   [absurd bots](bots.md#absurd-bots) and ["Hustler"](bots.md#hustler); used in
   [entry 2](journal/02-the-bonjour-bots.md) to tell them apart from the Bonjour bots.
-- **Shared trade evaluation:** the score most of our bots on rules give a trade: a side's own gain minus 0.6x the
+- **Shared trade evaluation:** the score most of our rule-based bots give a trade: a side's own gain minus 0.6x the
   other side's gain, where a gain counts property prices, bonuses for complete sets, railroads and both utilities,
   cash, jail release cards and the cost of mortgages. A score above zero means the trade pays for that side; the bad offers of the [absurd bots](bots.md#absurd-bots) score below -100 for the
   recipient.
@@ -79,8 +82,10 @@ Contents: [the game and the bots](#the-game-and-the-bots), [what the model sees 
 
 ## How we train
 
-- **PPO (Proximal Policy Optimization):** the RL algorithm we use. It improves the policy in small steps from games
-  the model has just played, clipping each update so the policy does not change too much at once.
+- **PPO (Proximal Policy Optimization):** the RL algorithm we use. It learns from games the model has just played.
+  In the clipped variant, its objective uses a clipped ratio between the new and previous probabilities of the sampled
+  action to discourage overly large policy changes. This does not directly clip parameter updates or guarantee a
+  fixed bound on how much the policy changes.
 - **Policy:** the network's output that chooses moves: a probability for every legal move at a decision.
 - **Value estimate:** a second output of the network that predicts how well the game will go from the current
   state; PPO uses it to judge whether a move turned out better or worse than expected.
@@ -191,7 +196,8 @@ protocol can be compared directly; values in parentheses come from noisy trainin
 measurement -> best -> last measurement", each with its step count; when the best is also the last, it shows two
 values, and a single value says when it was measured. Loki steps are the run's own steps with the total since the
 start of Loki gen2 in parentheses (see "M steps" under [how we train](#how-we-train)). Which model was trained
-from which is shown in the [model lineage](lineage.md) diagram.
+from which is shown in the [model lineage](lineage.md) diagram. The Loki series is an [abandoned
+branch](abandoned-models.md#abandoned-branch-loki): its training was left to an AI model (Claude Opus) without supervision.
 
 ### MLPs
 
@@ -236,4 +242,35 @@ from which is shown in the [model lineage](lineage.md) diagram.
 | Mjolnir | transformer | v6 / standard-v2 | rules phase, imitation of mini-evo5, 2 rounds of teacher correction by mini-evo5 and "Calculator" | 11.0% before RL; (about 8.5% -> 17.2% at 3 M -> 16.2% at 4 M) | main; training evaluation |
 | Mjolnir gen0c | transformer 4x128 (about 0.66 M parameters) | v6 / standard-v2 | as Mjolnir | stopped after its place head memorized games; no result | - |
 | first njord attempt | transformer 6x128 | v7, first version (log with trade-window entries) / standard-v2 | from scratch: rules phase | stopped in the rules phase; no play result | - |
-| njord-gen0 | transformer 6x128 (1.33 M parameters) | v7, 64-entry log, 8 offers per direction / standard-v2 | from scratch: rules phase, imitation of a hybrid player, teacher correction, RL | in training, no results yet | - |
+| njord-gen0-kickstart | transformer 6x128 (1.33 M parameters) | v7, 64-entry log, 8 offers per direction / standard-v2 | from scratch: rules phase, imitation and teacher correction by "Resistant Bonjour C + Windows" | - | - |
+| njord-gen0-offers-full | transformer 6x128 | as njord-gen0-kickstart | kickstart checkpoint before PPO; training on trade offers (4,000 games) | - | - |
+| njord-gen0-offers-rl | transformer 6x128 | as njord-gen0-kickstart | njord-gen0-offers-full; PPO, 1 M steps | (36.9% before PPO -> 37.8% at 1 M; 16 bots, 40 games each) | training evaluation |
+| njord-gen0-rl2 | transformer 6x128 | as njord-gen0-kickstart | njord-gen0-offers-rl; PPO, 1 M steps | 32.2% | elimination tournament |
+| **njord-gen0** (checkpoint: njord-gen0-rl2-offers1) | transformer 6x128 | as njord-gen0-kickstart | njord-gen0-rl2; training on trade offers, 1,500 games | 31.5% | elimination tournament |
+| cassandra | transformer 6x128 | v7, as njord-gen0 | rules phase on 30,000 bot games, with the place head training the trunk | held-out place loss 1.275 after epoch 1 -> 1.364 after epoch 2; stopped, no playing evaluation | held-out games; auxiliary prediction |
+
+The six-stage comparison below uses the same teacher and training procedure for all models. Results are training
+win rates after teacher correction, training on trade offers and PPO, respectively. The remaining training and playing
+evaluations of vidar, hermod, tyr and odin were skipped because of limited computing resources; a dash marks those omitted
+stages. See the full [comparison](journal/03-transformers-assemble.md#analysis-comparing-network-sizes-against-the-same-set-of-bots)
+for held-out losses and details. Each win rate uses 40 games against each of the same 16 bots; the individual games
+may use different seeds and dice rolls.
+
+| Model | Network | Encoder / action space | Wins after teacher correction -> training on trade offers -> PPO |
+|---|---|---|---|
+| ymir | transformer 2x16 | v7 / standard-v2 | 12.5% -> 10.2% -> 11.2% |
+| hodr | transformer 2x32 | as ymir | 31.2% -> 26.4% -> 30.0% |
+| vidar | transformer 4x32 | as ymir | - -> - -> - |
+| ullr | transformer 2x64 | as ymir | 30.8% -> 33.6% -> 41.2% |
+| forseti | transformer 4x64 | as ymir | 32.7% -> 32.7% -> 37.2% |
+| hermod | transformer 6x64 | as ymir | - -> - -> - |
+| baldr | transformer 2x128 | as ymir | 38.0% -> 34.4% -> 37.5% |
+| vali | transformer 4x128 | as ymir | 36.2% -> 36.1% -> 35.3% |
+| bragi | MLP [80, 64] | v7, unrolled observation / standard-v2 | 9.5% -> 11.4% -> 10.8% |
+| freyr | transformer 6x128 | as ymir | 35.3% -> 37.8% -> 40.9% |
+| tyr | transformer 6x192 | as ymir | - -> - -> - |
+| odin | transformer 8x256 | as ymir | - -> - -> - |
+| heimdall | MLP [1024, 512] | v7, unrolled observation / standard-v2 | 11.7% -> 12.0% -> 8.4% |
+
+Results from a separate tournament among ten models are in [entry 3](journal/03-transformers-assemble.md#tournament-the-models-against-each-other);
+they use a different opponent pool and should not be compared directly with the training win rates above.

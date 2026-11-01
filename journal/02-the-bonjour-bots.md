@@ -107,7 +107,7 @@ the tactics of FP-A, FP-B and FP-C from scratch, from the paper's description an
 against them. These are our bots: the implementation and the adaptation to the rules of our game are ours, and all
 results in this entry concern our implementation in our game, not the authors' agents.
 
-This also addresses in part a limitation we listed in [entry 1](01-from-rule-bots-to-v7.md#13-limitations): we
+This also addresses in part a limitation we listed in [entry 1](01-from-rule-bots-to-v7.md#12-limitations): we
 measure against the same bots we tuned against. Such an implementation gives us an opponent whose tactics we did not
 design, and a rough bridge to the paper's setup. It is only a rough bridge, because the rules differ and our versions of two of the three opponents rest on the paper's
 description rather than on code ([where we had to guess](#where-we-had-to-guess)).
@@ -199,7 +199,7 @@ players chance level is 25%.
 
 ### Mixed tables
 
-1,000 games, with four bots at each table drawn at random (with replacement) from our 8 bots on rules and the three
+1,000 games, with four bots at each table drawn at random (with replacement) from our 8 rule-based bots and the three
 Bonjour bots, about 350-380 games per bot:
 
 | Bot | Wins | 95% CI | Mean place |
@@ -358,7 +358,7 @@ wrote no new rule:
   properties in a group, unless the price compensates, that is unless the rival's gain is at most 1.25x its own
   ([tuning](01-from-rule-bots-to-v7.md#tuning-and-why-we-undid-half-of-it));
 - **a positive shared evaluation:** the trade must be worth more than zero by the shared trade evaluation that most
-  of our bots on rules answer offers with.
+  of our rule-based bots answer offers with.
 
 If either check fails, it rejects. The readiness to overpay for the property that completes a set stays, but only
 within the evaluation, which adds a bonus of 1.5x the prices of the group for a complete set: a light blue street
@@ -539,8 +539,9 @@ How to read it:
   mixed tables, less than "Calculator". What wins is collecting piece by piece the right groups, the railroads and the
   orange and light blue groups (or the railroads and the dark blue group), as the test of
   [section 3](#which-priority-helps) shows.
-- **Our bots lose to it because of a gap in how they value a trade** ([the mechanism](#the-mechanism)), not because they
-  play badly in other areas: they still beat the weaker bots and refuse bad offers.
+- **Our observations point to a gap in how our bots value a trade as a reason for their losses**
+  ([the mechanism](#the-mechanism)). They still beat the weaker bots and refuse bad offers; we have not isolated the
+  contribution of every other area of play.
 - **It is a statement about our game and our implementation**, not about the game of the paper, whose rules are simpler
   ([section 1](#1-why-implement-bots-from-earlier-tactics)).
 
@@ -668,10 +669,10 @@ predicted: the edge of the bad-offer senders comes from donors.
 
 ## 12. The windows variants
 
-The most successful change came from reading the Bonjour tactic against the mechanics of our game. The paper's game has
-no trade windows; ours lets every player, in turn, propose one trade at fixed moments of another player's turn
-(before a payment, after a property is acquired, after a negotiation, at the end of a turn). The Bonjour bots follow the
-paper and propose trades only in their own turn, before the roll. In a window they only build and lift mortgages and then
+The most successful change came from comparing the Bonjour tactic with the mechanics of our game. GNOME has an
+out-of-turn phase before the roll, and the paper's interface permits trade offers in that phase. Our game additionally
+opens windows at specific events: before a payment, after a property is acquired, after a negotiation, and at the end
+of a turn. Our original Bonjour bots propose trades only in their own turn, before the roll. In a window they only build and lift mortgages and then
 pass, and they say nothing when raising money for a debt or answering with a counter-offer. That is a lot of silent
 decisions in a game with hundreds of them.
 
@@ -710,6 +711,7 @@ Again there was no player that accepts bad offers. Three rounds of 4,000 games, 
 Their gap in the final, 3.0 points, is a little beyond the noise (about +/-2.2).
 
 The games of this tournament and of a few shorter ones give the Elo ranking in [bots.md](../bots.md#current-elo-ranking).
+All Elo figures in this entry describe the ranking at the time it was written; later entries may report different snapshots.
 Its main facts, with the caveat that neighbors a few points apart cannot be told apart:
 
 - "Resistant Bonjour C + Windows" (1569) and "Resistant Bonjour B + Windows" (1557) are first and second, 29 and 41 points
@@ -764,7 +766,7 @@ Bonjour C", and "Resistant Bonjour C" won the head-to-head in a pool without the
 ([section 10](#b-against-c)).
 
 **"Strong bots", with a qualifier.** We have called our best bots "strong bots", and in one sense they are: they
-cannot be exploited by bad offers. But they have a gap in trading: they judge each trade on its own and do not see a
+resist the bad-offer tactics tested here. But they have a gap in trading: they judge each trade on its own and do not see a
 sequence of individually fair trades that hands an opponent a set. A very simple fixed policy found that gap
 ([the plain result](#7-the-plain-result)). Repairing it in our own bot ("Wary Calculator") helped against the
 Bonjour bots but did not make our bot stronger than the tactic.

@@ -30,6 +30,11 @@ of the red group") rather than by their names in any edition of the original gam
   player per trade window, and at most 3 trade requests per player per turn.
 - **An optional round limit** with a ranking by net worth. Tables with humans have no limit by default;
   simulations and training use 200 rounds.
+- **Net worth and ties.** Net worth is cash plus, for each owned property, its purchase price (half of it if the
+  property is mortgaged) plus the cost of the buildings on it (a hotel counts as five houses). Cards, including the
+  jail release card, have no value. At the round limit the players still in the game are ranked by net worth; equal
+  net worth is broken by seat order (the lower seat ranks higher). Bankrupt players rank below them: the later a
+  player went bankrupt, the higher.
 - **Time limits** for AI agents (and, optionally, for humans): after the decision deadline a player resigns, or a
   passive autopilot plays for them if the table allows it; in trade windows a short reaction time applies, after
   which the player passes.
@@ -37,9 +42,10 @@ of the red group") rather than by their names in any edition of the original gam
 ## Our own decisions where the official rules are silent
 
 - Interest and mortgage repayment are rounded up to a whole dollar.
-- Whoever receives a mortgaged property (in a trade or from a bankrupt player) is always asked, for each such
-  property, whether to repay the mortgage at once or pay only the 10% interest, and has full rights (trading,
-  mortgaging, selling buildings) before answering, even without the cash to repay.
+- When a player receives a mortgaged property (in a trade or from a bankrupt player), the choice between immediate
+  repayment and paying only the 10% interest follows the official rules. Our additional decision is to present that
+  choice separately for each property and allow full asset management (trading, mortgaging, selling buildings)
+  before answering, even without the cash to repay.
 - An auction winner without enough cash owes the bank and raises money like any debtor; if that fails, they are
   bankrupt to the bank and all their properties, including the one just won, are auctioned.
 - Bankruptcy to several creditors at once splits the cash in proportion to the unpaid debts (leftover dollars are

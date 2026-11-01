@@ -57,7 +57,8 @@ by a wide margin. The story is in [entry 2](journal/02-the-bonjour-bots.md).
 ## Current Elo ranking
 
 The ranking below is a Bradley-Terry fit on the Elo scale ([glossary](glossary.md#how-we-measure)) over the games of
-the tournaments that were recorded to the rating, taken from the server at the time of writing. Every game counts as a
+the tournaments that were recorded to the rating, taken from the server at the time of writing this document. All Elo
+figures in this document refer to that snapshot; other journal entries may report ratings from a different time. Every game counts as a
 set of pairwise results ("who finished ahead"), 1500 is the average of all rated players, and every player gets 5
 virtual wins and 5 virtual losses against a 1500 player. Players that are not bots are left out of the table. Most of
 the games come from one 12,000-game elimination tournament with 7 candidates and 27 sparring partners
@@ -171,8 +172,9 @@ Its trade variability is 0.1 ([variance parameters](#variance-parameters)).
 
 ### Role in the project
 
-It is the yardstick every model is compared with, and the teacher for auctions and trades in most of our training
-runs (the Loki students and njord; it was also one of Mjolnir's teachers). In the hybrid-player diagnosis it plays every area except the one the model
+It is the reference for the earlier model comparisons and the teacher for auctions and trades in the Loki students;
+it was also one of Mjolnir's teachers. The later njord-gen0 instead learns from "Resistant Bonjour C + Windows"
+([entry 3](journal/03-transformers-assemble.md)). In the hybrid-player diagnosis it plays every area except the one the model
 takes over, which showed that trades are the model's weakest area
 ([which part of the game loses?](journal/01-from-rule-bots-to-v7.md#which-part-of-the-game-loses)). "Hustler" and
 "Absurd Calculator" are built on it.
@@ -458,8 +460,8 @@ unprofitable for the recipient by the shared bot evaluation (below -100):
 - the jail release card for nothing;
 - a mortgaged junk property for a fortune.
 
-On offers from others they answer like the originals, so they cannot be exploited themselves. They are mixed into
-training opponents as a robustness test.
+On offers from others they answer like the originals and resist the bad-offer tactics tested here. They are mixed
+into training opponents as a robustness test.
 
 ### Measured strength
 
@@ -537,7 +539,7 @@ other models could not refuse them. The full story is in the journal:
 It plays every area of the game like ["Calculator"](#calculator). Up to twice per turn it sends an offer that is
 clearly unprofitable for the recipient by the shared bot evaluation (below -100): cash for nothing, a property for
 pennies, the jail card for nothing, or a mortgaged junk property for a fortune. On offers from others it answers like
-"Calculator", so it cannot be exploited itself. It is mixed into training opponents as a robustness test.
+"Calculator" and resists the bad-offer tactics tested here. It is mixed into training opponents as a robustness test.
 
 ### Measured strength
 
@@ -802,9 +804,10 @@ for a debt, and as counter-offers.**
 
 ### Where they came from
 
-Our game has trade windows, which the game of earlier work lacks: besides the owner's turn, every other player in turn
-may manage assets and propose one trade at fixed moments ([glossary](glossary.md#the-game-and-the-bots)). The Bonjour
-bots follow the earlier work and propose trades only in their own turn, before the roll; in a window they only build and
+GNOME has an out-of-turn phase before the roll in which its interface permits asset management and trade offers.
+Our game additionally opens trade windows at specific events, including before payments, after acquisitions and
+negotiations, and at the end of a turn ([glossary](glossary.md#the-game-and-the-bots)). Our original Bonjour
+bots propose trades only in their own turn, before the roll; in a window they only build and
 lift mortgages and then pass, and they say nothing when raising money for a debt or answering with a counter-offer.
 These variants adapt the tactic to the trade-window mechanic of our game. Earlier [hybrids](#bonjour-hybrids-with-calculator)
 that replaced the Bonjour offers with the offers of "Calculator" did poorly (about 20% in the first elimination
@@ -856,8 +859,8 @@ the windows, the debt sales and the counter-offers.
 
 ### Role in the project
 
-The strongest bots we have measured. They show that the Bonjour tactic gets stronger when the trade-window mechanic of
-our game, which the earlier work lacks, is used for its goal, collecting sets by trade.
+The strongest bots we had measured at the time of writing this document. They show that the Bonjour tactic gets stronger
+when our additional event-triggered trade windows are used for its goal, collecting sets by trade.
 
 ## Variance parameters
 

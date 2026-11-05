@@ -11,7 +11,8 @@ comparison ranges from about 24,000 to 6.6 million parameters and also includes 
 parameters ([entry 3](journal/03-transformers-assemble.md#analysis-comparing-network-sizes-against-the-same-set-of-bots)).
 
 This repository holds the **public write-ups** of the project: what we tried, what worked, what did not, and the
-numbers behind it. The game itself (without the training tooling) is planned to be published here later.
+numbers behind it. **To play the game against our models, install
+[Boardcraft](https://github.com/q3ok/boardcraft-public)** (see [Play against our models](#play-against-our-models)).
 
 **Start here:** the [In short](journal/01-from-rule-bots-to-v7.md#in-short) summary at the top of the first journal
 entry.
@@ -36,6 +37,17 @@ sponsored or endorsed by Hasbro. It implements the **same mechanics** as the cla
 same board layout and numbers, that is prices, rents and building costs, the same card effects, auctions, jail, even building, mortgages and bankruptcy), but **it is not the
 Monopoly game**: it has its own names for cards and squares, its own card texts, logo and artwork. A few
 simplifications, and our own decisions where the official rules are silent, are documented in [the rules](rules.md).
+
+## Play against our models
+
+The game (without the training tooling) is published in
+[Boardcraft](https://github.com/q3ok/boardcraft-public), a local board-game platform. It runs on your own computer and
+includes three of the models from this log, `mini-evo5`, `njord-gen0` and `hodr`, which need no GPU. The bots from
+[bots.md](bots.md) are there too.
+
+Follow the [Boardcraft install steps](https://github.com/q3ok/boardcraft-public#install), run
+`boardcraft serve --host 127.0.0.1 --port 8000` and open http://127.0.0.1:8000. Under **New table**, choose
+**Rentcraft**, set a seat to **RL model** and pick a model.
 
 ## Why this game?
 
@@ -139,8 +151,8 @@ what had been done or why, so I abandoned the branch.
 
 The texts in this repository are licensed by q3ok under [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE):
 you may share and adapt them, including commercially, as long as you give appropriate credit (e.g. "Rentcraft,
-q3ok, https://github.com/q3ok/rentcraft") and indicate if changes were made. CC BY covers the texts only; code published
-here later will carry its own, separate license.
+q3ok, https://github.com/q3ok/rentcraft") and indicate if changes were made. CC BY covers the texts only, not the game
+code in [Boardcraft](https://github.com/q3ok/boardcraft-public).
 
 *Monopoly is a trademark of Hasbro. Rentcraft is an independent research project, not affiliated with or endorsed
 by Hasbro.*

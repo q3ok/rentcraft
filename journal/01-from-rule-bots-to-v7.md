@@ -522,7 +522,7 @@ How mini-evo5 compares, across protocols:
   files keep wins per bot and seat but not per seed, so we could not compute a paired interval, which could be
   narrower.
 
-It is available as an opponent in our game (not yet public). Its strange
+It is available as an opponent in [Boardcraft](https://github.com/q3ok/boardcraft-public). Its strange
 weakness: against three "Random" bots it wins only **66.7%** instead of nearly 100%, and it loses only through
 bankruptcy. The "Random" bots bid recklessly in auctions, and the model's own bidding was never anchored by a teacher.
 
